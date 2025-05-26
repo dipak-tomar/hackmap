@@ -1,43 +1,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Trophy } from "lucide-react"
+import { Calendar, Trophy, Users } from "lucide-react"
 import Link from "next/link"
+import { prisma } from "@/lib/prisma"
 
-const featuredHackathons = [
-  {
-    id: "1",
-    title: "AI Innovation Challenge",
-    theme: "Artificial Intelligence",
-    startDate: "2024-02-15",
-    endDate: "2024-02-17",
-    location: "San Francisco, CA",
-    prize: "$50,000",
-    participants: 500,
-  },
-  {
-    id: "2",
-    title: "Green Tech Hackathon",
-    theme: "Sustainability",
-    startDate: "2024-03-01",
-    endDate: "2024-03-03",
-    location: "Austin, TX",
-    prize: "$25,000",
-    participants: 300,
-  },
-  {
-    id: "3",
-    title: "FinTech Revolution",
-    theme: "Financial Technology",
-    startDate: "2024-03-15",
-    endDate: "2024-03-17",
-    location: "New York, NY",
-    prize: "$75,000",
-    participants: 750,
-  },
-]
-
-export function FeaturedHackathons() {
+export async function FeaturedHackathons() {
+  // Fetch featured hackathons (upcoming ones with registration open)
+  const featuredHackathons = await prisma.hackathon.findMany({
+    where: {
+      registrationDeadline: {
+        gt: new Date(),
+      },
+    },
+    include: {
+      organizer: {
+        select: {
+          name: true,
+        },
+      },
+      registrations: {
+        select: {
+          id: true,
+        },
+      },
+    },
+    orderBy: {
+      startDate: 'asc',
+    },
+    take: 3,
+  })
   return (
     <section className="py-16 px-4">
       <div className="container mx-auto">
@@ -49,37 +41,45 @@ export function FeaturedHackathons() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredHackathons.map((hackathon) => (
-            <Card key={hackathon.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="secondary">{hackathon.theme}</Badge>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Trophy className="h-4 w-4 mr-1" />
-                    {hackathon.prize}
+          {featuredHackathons.map((hackathon) => {
+            const prizes = hackathon.prizes ? JSON.parse(hackathon.prizes) : []
+            
+            return (
+              <Card key={hackathon.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="secondary" className="capitalize">{hackathon.theme}</Badge>
+                    {prizes.length > 0 && (
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Trophy className="h-4 w-4 mr-1" />
+                        {prizes[0]}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <CardTitle className="text-xl">{hackathon.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {new Date(hackathon.startDate).toLocaleDateString()} -{" "}
-                    {new Date(hackathon.endDate).toLocaleDateString()}
+                  <CardTitle className="text-xl">{hackathon.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {new Date(hackathon.startDate).toLocaleDateString()} -{" "}
+                      {new Date(hackathon.endDate).toLocaleDateString()}
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Users className="h-4 w-4 mr-2" />
+                      {hackathon.registrations.length} registered
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Organized by {hackathon.organizer.name}
+                    </div>
+                    <Button className="w-full mt-4" asChild>
+                      <Link href={`/hackathons/${hackathon.id}`}>Learn More</Link>
+                    </Button>
                   </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    {hackathon.location}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{hackathon.participants} participants registered</div>
-                  <Button className="w-full mt-4" asChild>
-                    <Link href={`/hackathons/${hackathon.id}`}>Learn More</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
         <div className="text-center mt-8">

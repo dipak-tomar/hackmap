@@ -54,8 +54,19 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json()
 
+    // Validate required fields
+    if (!data.title || !data.description || !data.teamId) {
+      return NextResponse.json({ error: "Title, description, and teamId are required" }, { status: 400 })
+    }
+
+    // Convert techStack array to JSON string
+    const projectData = {
+      ...data,
+      techStack: JSON.stringify(data.techStack || []),
+    }
+
     const project = await prisma.project.create({
-      data,
+      data: projectData,
       include: {
         team: {
           include: {

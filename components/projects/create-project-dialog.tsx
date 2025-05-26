@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,22 @@ interface CreateProjectDialogProps {
   children: React.ReactNode
 }
 
+interface Team {
+  id: string
+  name: string
+  hackathon: {
+    id: string
+    title: string
+    maxTeamSize: number
+  }
+  members: Array<{
+    user: {
+      id: string
+      name: string | null
+    }
+  }>
+}
+
 export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
@@ -32,7 +48,42 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
   const [techStack, setTechStack] = useState<string[]>([])
   const [newTech, setNewTech] = useState("")
   const [loading, setLoading] = useState(false)
+  const [teams, setTeams] = useState<Team[]>([])
+  const [teamsLoading, setTeamsLoading] = useState(false)
   const { toast } = useToast()
+
+  // Fetch user's teams when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchTeams()
+    }
+  }, [open])
+
+  const fetchTeams = async () => {
+    setTeamsLoading(true)
+    try {
+      const response = await fetch("/api/teams")
+      if (response.ok) {
+        const data = await response.json()
+        // Filter teams where the current user is a member
+        setTeams(data)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch teams",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch teams",
+        variant: "destructive",
+      })
+    } finally {
+      setTeamsLoading(false)
+    }
+  }
 
   const addTech = () => {
     if (newTech && !techStack.includes(newTech)) {
@@ -72,6 +123,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
         setDescription("")
         setTeamId("")
         setTechStack([])
+        setTeams([])
       } else {
         const data = await response.json()
         toast({
@@ -115,11 +167,20 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
             <Label htmlFor="team">Team</Label>
             <Select value={teamId} onValueChange={setTeamId} required>
               <SelectTrigger>
-                <SelectValue placeholder="Select your team" />
+                <SelectValue placeholder={teamsLoading ? "Loading teams..." : "Select your team"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">AI Innovators</SelectItem>
-                <SelectItem value="2">Green Tech Warriors</SelectItem>
+                {teams.length > 0 ? (
+                  teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name} - {team.hackathon.title}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1 text-sm text-muted-foreground">
+                    {teamsLoading ? "Loading..." : "No teams found. Create a team first."}
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>

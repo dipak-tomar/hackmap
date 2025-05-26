@@ -6,12 +6,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, MessageSquare, ExternalLink, Users } from "lucide-react"
+import Link from "next/link"
 
 interface Project {
   id: string
   title: string
   description: string
-  techStack: string[]
+  techStack: string // JSON string, not array
   team: {
     name: string
     hackathon: {
@@ -58,34 +59,38 @@ export function ProjectGrid() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {projects.map((project) => (
-        <Card key={project.id} className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <div className="flex justify-between items-start mb-2">
-              <Badge variant="outline">{project.team.hackathon.title}</Badge>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Heart className="h-4 w-4" />
-                {project._count.endorsements}
+      {projects.map((project) => {
+        // Parse techStack from JSON string to array
+        const techStack = project.techStack ? JSON.parse(project.techStack) : []
+        
+        return (
+          <Card key={project.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex justify-between items-start mb-2">
+                <Badge variant="outline">{project.team.hackathon.title}</Badge>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Heart className="h-4 w-4" />
+                  {project._count.endorsements}
+                </div>
               </div>
-            </div>
-            <CardTitle className="text-lg">{project.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">by {project.team.name}</p>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{project.description}</p>
+              <CardTitle className="text-lg">{project.title}</CardTitle>
+              <p className="text-sm text-muted-foreground">by {project.team.name}</p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{project.description}</p>
 
-            <div className="flex flex-wrap gap-1 mb-4">
-              {project.techStack.slice(0, 3).map((tech) => (
-                <Badge key={tech} variant="secondary" className="text-xs">
-                  {tech}
-                </Badge>
-              ))}
-              {project.techStack.length > 3 && (
-                <Badge variant="secondary" className="text-xs">
-                  +{project.techStack.length - 3}
-                </Badge>
-              )}
-            </div>
+              <div className="flex flex-wrap gap-1 mb-4">
+                {techStack.slice(0, 3).map((tech: string) => (
+                  <Badge key={tech} variant="secondary" className="text-xs">
+                    {tech}
+                  </Badge>
+                ))}
+                {techStack.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{techStack.length - 3}
+                  </Badge>
+                )}
+              </div>
 
             <div className="flex items-center gap-2 mb-4">
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -111,14 +116,17 @@ export function ProjectGrid() {
                   Endorse
                 </Button>
               </div>
-              <Button size="sm" variant="outline">
-                <ExternalLink className="h-4 w-4 mr-1" />
-                View
-              </Button>
+              <Link href={`/projects/${project.id}`}>
+                <Button size="sm" variant="outline">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  View
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
-      ))}
+        )
+      })}
     </div>
   )
 }
