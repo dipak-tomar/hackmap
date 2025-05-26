@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  bio           String?
+  skills        String    @default("[]") // JSON array as string
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  organizedHackathons Hackathon[] @relation("HackathonOrganizer")
+  registrations HackathonRegistration[]
+  teamMemberships TeamMember[]
+  ledTeams      Team[]    @relation("TeamLeader")
+  notifications Notification[]
+  projectEndorsements ProjectEndorsement[]
+  projectComments ProjectComment[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Hackathon {
+  id                   String   @id @default(cuid())
+  title                String
+  description          String
+  theme                String
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime
+  maxTeamSize          Int      @default(4)
+  prizes               String   @default("[]") // JSON array as string
+  tags                 String   @default("[]") // JSON array as string
+  organizerId          String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  organizer     User                    @relation("HackathonOrganizer", fields: [organizerId], references: [id])
+  registrations HackathonRegistration[]
+  teams         Team[]
+}
+
+model HackathonRegistration {
+  id           String   @id @default(cuid())
+  userId       String
+  hackathonId  String
+  registeredAt DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  hackathon Hackathon @relation(fields: [hackathonId], references: [id])
+
+  @@unique([userId, hackathonId])
+}
+
+model Team {
+  id           String   @id @default(cuid())
+  name         String
+  description  String
+  hackathonId  String
+  leaderId     String
+  inviteCode   String   @unique @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  hackathon Hackathon    @relation(fields: [hackathonId], references: [id])
+  leader    User         @relation("TeamLeader", fields: [leaderId], references: [id])
+  members   TeamMember[]
+  projects  Project[]
+}
+
+model TeamMember {
+  id       String     @id @default(cuid())
+  teamId   String
+  userId   String
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([teamId, userId])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  techStack   String   @default("[]") // JSON array as string
+  teamId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  team         Team                 @relation(fields: [teamId], references: [id])
+  comments     ProjectComment[]
+  endorsements ProjectEndorsement[]
+}
+
+model ProjectComment {
+  id        String   @id @default(cuid())
+  content   String
+  projectId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model ProjectEndorsement {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum MemberRole {
+  LEADER
+  MEMBER
+}
+
+enum NotificationType {
+  TEAM_INVITE
+  JOIN_REQUEST
+  DEADLINE_REMINDER
+  TEAM_UPDATE
+  PROJECT_COMMENT
+  PROJECT_ENDORSEMENT
+}

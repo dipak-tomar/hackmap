@@ -1,0 +1,129 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Users, Settings, MessageSquare, Calendar } from "lucide-react"
+import Link from "next/link"
+
+interface Team {
+  id: string
+  name: string
+  description: string
+  hackathon: {
+    id: string
+    title: string
+    startDate: string
+  }
+  members: Array<{
+    role: string
+    user: {
+      id: string
+      name: string
+      image: string | null
+    }
+  }>
+}
+
+export function MyTeams() {
+  const [teams, setTeams] = useState<Team[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchMyTeams()
+  }, [])
+
+  const fetchMyTeams = async () => {
+    try {
+      // In a real app, this would filter by current user
+      const response = await fetch("/api/teams")
+      if (response.ok) {
+        const data = await response.json()
+        setTeams(data.slice(0, 2)) // Mock: show first 2 teams as "my teams"
+      }
+    } catch (error) {
+      console.error("Error fetching teams:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <div>Loading your teams...</div>
+  }
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">My Teams</h2>
+
+      {teams.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {teams.map((team) => (
+            <Card key={team.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{team.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{team.hackathon.title}</p>
+                  </div>
+                  <Badge variant="default">Leader</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm mb-4">{team.description}</p>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Starts {new Date(team.hackathon.startDate).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{team.members.length} members</span>
+                  <div className="flex -space-x-2 ml-2">
+                    {team.members.map((member, index) => (
+                      <Avatar key={index} className="h-6 w-6 border-2 border-background">
+                        <AvatarImage src={member.user.image || ""} />
+                        <AvatarFallback className="text-xs">{member.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline">
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    Chat
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Settings className="h-4 w-4 mr-1" />
+                    Manage
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href={`/teams/${team.id}`}>View</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No teams yet</h3>
+            <p className="text-muted-foreground mb-4">Create your first team or join an existing one to get started</p>
+            <div className="flex gap-2 justify-center">
+              <Button>Create Team</Button>
+              <Button variant="outline">Browse Teams</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
