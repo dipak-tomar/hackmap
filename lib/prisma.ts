@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client"
-import { getOptimizedDatabaseUrl, dbConfig } from "./db-config"
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -8,11 +7,6 @@ const globalForPrisma = globalThis as unknown as {
 // Create Prisma client with optimized connection settings
 const createPrismaClient = () => {
   const client = new PrismaClient({
-    datasources: {
-      db: {
-        url: getOptimizedDatabaseUrl(),
-      },
-    },
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     errorFormat: "minimal",
   })

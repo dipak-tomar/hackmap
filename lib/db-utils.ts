@@ -55,6 +55,11 @@ export async function safeDbOperation<T>(
 // Connection health check
 export async function checkDbConnection(): Promise<boolean> {
   try {
+    // Skip health check during build time
+    if (process.env.VERCEL_ENV === 'preview' || !process.env.DATABASE_URL) {
+      return true
+    }
+    
     await prisma.$queryRaw`SELECT 1`
     return true
   } catch (error) {
@@ -66,6 +71,11 @@ export async function checkDbConnection(): Promise<boolean> {
 // Force connection refresh
 export async function refreshConnection(): Promise<void> {
   try {
+    // Skip refresh during build time
+    if (process.env.VERCEL_ENV === 'preview' || !process.env.DATABASE_URL) {
+      return
+    }
+    
     await prisma.$disconnect()
     await prisma.$connect()
     console.log('Database connection refreshed')

@@ -80,7 +80,10 @@ export class ConnectionMonitor {
   }
 }
 
-// Auto-start monitoring in production
-if (process.env.NODE_ENV === 'production') {
-  ConnectionMonitor.getInstance().startMonitoring()
+// Auto-start monitoring in production (only at runtime, not during build)
+if (process.env.NODE_ENV === 'production' && typeof window === 'undefined' && !process.env.VERCEL_ENV) {
+  // Only start monitoring in actual production runtime, not during build
+  setTimeout(() => {
+    ConnectionMonitor.getInstance().startMonitoring()
+  }, 1000)
 } 
