@@ -60,6 +60,37 @@ The app is configured to handle build-time issues automatically:
 - ✅ Environment variables are validated at runtime
 - ✅ Graceful fallbacks for missing configurations
 - ✅ Health check endpoints for monitoring
+- ✅ Prisma client generation in build process
+- ✅ Serverless-optimized binary targets
+
+### Vercel Configuration
+
+The project includes a `vercel.json` file with optimized settings:
+
+```json
+{
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "pnpm install && prisma generate",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+### Package.json Scripts
+
+The build process includes Prisma generation:
+
+```json
+{
+  "scripts": {
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate"
+  }
+}
+```
 
 ### Troubleshooting
 
@@ -83,13 +114,23 @@ If you encounter build errors:
    - Usually caused by missing environment variables
    - Check Vercel environment variable settings
 
-2. **Database connection timeout**
+2. **"Cannot find module '.prisma/client/default'"**
+   - Prisma client not generated during build
+   - Fixed by adding `prisma generate` to build scripts
+   - Ensure `vercel.json` includes proper build commands
+
+3. **Database connection timeout**
    - App automatically retries failed connections
    - Check database provider status
 
-3. **NextAuth errors**
+4. **NextAuth errors**
    - Verify NEXTAUTH_URL matches your domain
    - Ensure NEXTAUTH_SECRET is set
+
+5. **Build fails on Vercel**
+   - Check that all environment variables are set
+   - Verify DATABASE_URL format is correct
+   - Ensure Prisma schema is valid
 
 ### Monitoring
 
