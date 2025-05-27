@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Search, Users, MessageSquare } from "lucide-react"
+import { Search, Users } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Team {
@@ -174,9 +174,6 @@ export function TeamSearch() {
                   disabled={requestingTeams.has(team.id)}
                 >
                   {requestingTeams.has(team.id) ? "Sending..." : "Request to Join"}
-                </Button>
-                <Button size="sm" variant="outline">
-                  <MessageSquare className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>

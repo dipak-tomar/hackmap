@@ -25,7 +25,13 @@ export async function GET() {
       },
       include: {
         team: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            inviteCode: true,
+            leaderId: true,
+            createdAt: true,
             hackathon: {
               select: {
                 id: true,

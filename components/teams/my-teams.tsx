@@ -5,13 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Users, Settings, MessageSquare, Calendar } from "lucide-react"
+import { Users, Calendar, UserPlus, Eye } from "lucide-react"
 import Link from "next/link"
+import { InviteMembersDialog } from "./invite-members-dialog"
 
 interface Team {
   id: string
   name: string
   description: string
+  inviteCode: string
+  leaderId: string
   hackathon: {
     id: string
     title: string
@@ -94,16 +97,21 @@ export function MyTeams() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    Chat
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Settings className="h-4 w-4 mr-1" />
-                    Manage
-                  </Button>
+                  <InviteMembersDialog
+                    teamName={team.name}
+                    inviteCode={team.inviteCode}
+                    hackathonTitle={team.hackathon.title}
+                  >
+                    <Button size="sm" variant="outline">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Invite Members
+                    </Button>
+                  </InviteMembersDialog>
                   <Button size="sm" asChild>
-                    <Link href={`/teams/${team.id}`}>View</Link>
+                    <Link href={`/teams/${team.id}`}>
+                      <Eye className="h-4 w-4 mr-1" />
+                      View Team
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
