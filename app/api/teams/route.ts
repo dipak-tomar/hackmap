@@ -12,10 +12,25 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const hackathonId = searchParams.get("hackathonId")
+    const search = searchParams.get("search")
 
     const where: any = {}
+    
     if (hackathonId) {
       where.hackathonId = hackathonId
+    }
+
+    // Add search functionality
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        {
+          hackathon: {
+            title: { contains: search, mode: "insensitive" }
+          }
+        }
+      ]
     }
 
     const teams = await prisma.team.findMany({

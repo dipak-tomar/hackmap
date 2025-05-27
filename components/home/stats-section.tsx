@@ -1,10 +1,36 @@
+"use client"
+
+import { useState, useEffect } from "react"
+
+interface Stat {
+  label: string
+  value: string
+}
+
 export function StatsSection() {
-  const stats = [
-    { label: "Active Hackathons", value: "150+" },
-    { label: "Registered Users", value: "25K+" },
-    { label: "Teams Formed", value: "5K+" },
-    { label: "Projects Created", value: "12K+" },
-  ]
+  const [stats, setStats] = useState<Stat[]>([
+    { label: "Active Hackathons", value: "3+" },
+    { label: "Registered Users", value: "100+" },
+    { label: "Teams Formed", value: "25+" },
+    { label: "Projects Created", value: "50+" },
+  ])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/stats")
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error)
+        // Keep fallback stats
+      }
+    }
+
+    fetchStats()
+  }, [])
 
   return (
     <section className="py-16 px-4 bg-muted/30">

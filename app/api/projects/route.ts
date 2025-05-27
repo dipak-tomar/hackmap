@@ -3,9 +3,57 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get("search")
+    const category = searchParams.get("category")
+    const sortBy = searchParams.get("sortBy") || "recent"
+
+    const where: any = {}
+
+    // Search filter
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { techStack: { contains: search, mode: "insensitive" } },
+        {
+          team: {
+            name: { contains: search, mode: "insensitive" }
+          }
+        }
+      ]
+    }
+
+    // Category filter (based on tech stack)
+    if (category && category !== "all") {
+      const categoryMap: { [key: string]: string[] } = {
+        ai: ["AI", "ML", "Machine Learning", "TensorFlow", "PyTorch", "OpenAI"],
+        web: ["React", "Vue", "Angular", "JavaScript", "TypeScript", "HTML", "CSS"],
+        mobile: ["React Native", "Flutter", "Swift", "Kotlin", "iOS", "Android"],
+        blockchain: ["Ethereum", "Solidity", "Web3", "Bitcoin", "Blockchain"],
+        iot: ["Arduino", "Raspberry Pi", "IoT", "Sensors"]
+      }
+
+      const techKeywords = categoryMap[category] || []
+      if (techKeywords.length > 0) {
+        where.OR = techKeywords.map(keyword => ({
+          techStack: { contains: keyword, mode: "insensitive" }
+        }))
+      }
+    }
+
+    // Determine order by
+    let orderBy: any = { createdAt: "desc" }
+    if (sortBy === "popular") {
+      orderBy = { comments: { _count: "desc" } }
+    } else if (sortBy === "endorsed") {
+      orderBy = { endorsements: { _count: "desc" } }
+    }
+
     const projects = await prisma.project.findMany({
+      where,
       include: {
         team: {
           include: {
@@ -35,7 +83,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
     })
 
     return NextResponse.json(projects)

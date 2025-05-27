@@ -1,5 +1,7 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+"use client"
+
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { ProjectFilters } from "@/components/projects/project-filters"
@@ -8,8 +10,17 @@ import { CreateProjectDialog } from "@/components/projects/create-project-dialog
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
-export default async function ProjectsPage() {
-  const session = await getServerSession(authOptions)
+export default function ProjectsPage() {
+  const { data: session, status } = useSession()
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "all",
+    sortBy: "recent"
+  })
+
+  if (status === "loading") {
+    return <div>Loading...</div>
+  }
 
   if (!session) {
     redirect("/auth/signin")
@@ -33,8 +44,8 @@ export default async function ProjectsPage() {
             </CreateProjectDialog>
           </div>
 
-          <ProjectFilters />
-          <ProjectGrid />
+          <ProjectFilters onFiltersChange={setFilters} />
+          <ProjectGrid filters={filters} />
         </div>
       </main>
     </div>

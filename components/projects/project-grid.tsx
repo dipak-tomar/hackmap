@@ -31,17 +31,30 @@ interface Project {
   }
 }
 
-export function ProjectGrid() {
+interface ProjectGridProps {
+  filters?: {
+    search: string
+    category: string
+    sortBy: string
+  }
+}
+
+export function ProjectGrid({ filters }: ProjectGridProps) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchProjects()
-  }, [])
+  }, [filters])
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/api/projects")
+      const params = new URLSearchParams()
+      if (filters?.search) params.set("search", filters.search)
+      if (filters?.category && filters.category !== "all") params.set("category", filters.category)
+      if (filters?.sortBy) params.set("sortBy", filters.sortBy)
+
+      const response = await fetch(`/api/projects?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
         setProjects(data)

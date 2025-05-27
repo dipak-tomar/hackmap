@@ -5,19 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
-import { Search, Users, MessageSquare } from "lucide-react"
+import { Users, MessageSquare, Star, TrendingUp } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-interface Team {
+interface RecommendedTeam {
   id: string
   name: string
   description: string
+  matchScore: number
+  commonSkills: string[]
+  complementarySkills: string[]
+  teamSkills: string[]
   hackathon: {
+    id: string
     title: string
+    maxTeamSize: number
   }
   members: Array<{
     user: {
+      id: string
       name: string
       image: string | null
       skills: string | null
@@ -28,42 +34,35 @@ interface Team {
   }
 }
 
-export function TeamSearch() {
-  const [teams, setTeams] = useState<Team[]>([])
-  const [search, setSearch] = useState("")
+interface MatchmakingResponse {
+  message: string
+  userSkills: string[]
+  teams: RecommendedTeam[]
+}
+
+export function TeamRecommendations() {
+  const [recommendations, setRecommendations] = useState<MatchmakingResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [requestingTeams, setRequestingTeams] = useState<Set<string>>(new Set())
   const { toast } = useToast()
 
-  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchTeams()
-    }, 300)
+    fetchRecommendations()
+  }, [])
 
-    return () => clearTimeout(timer)
-  }, [search])
-
-  const fetchTeams = async () => {
-    setLoading(true)
+  const fetchRecommendations = async () => {
     try {
-      const params = new URLSearchParams()
-      if (search) params.set("search", search)
-      
-      const response = await fetch(`/api/teams?${params.toString()}`)
+      const response = await fetch("/api/teams/matchmaking")
       if (response.ok) {
         const data = await response.json()
-        setTeams(data)
+        setRecommendations(data)
       }
     } catch (error) {
-      console.error("Error fetching teams:", error)
+      console.error("Error fetching recommendations:", error)
     } finally {
       setLoading(false)
     }
   }
-
-  // Remove client-side filtering since we're doing it server-side now
-  const filteredTeams = teams
 
   const handleJoinRequest = async (teamId: string) => {
     setRequestingTeams(prev => new Set(prev).add(teamId))
@@ -103,29 +102,54 @@ export function TeamSearch() {
   }
 
   if (loading) {
-    return <div>Loading teams...</div>
+    return <div>Loading recommendations...</div>
+  }
+
+  if (!recommendations || recommendations.teams.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Recommendations Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            {recommendations?.userSkills?.length === 0 
+              ? "Add skills to your profile to get personalized team recommendations"
+              : "No matching teams found at the moment"
+            }
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-4">Find Teams</h2>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search teams by name, description, or hackathon..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <h2 className="text-2xl font-bold mb-2">Recommended Teams</h2>
+        <p className="text-muted-foreground mb-4">{recommendations.message}</p>
+        {recommendations.userSkills?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-4">
+            <span className="text-sm text-muted-foreground mr-2">Your skills:</span>
+            {recommendations.userSkills.map((skill) => (
+              <Badge key={skill} variant="outline" className="text-xs">
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTeams.map((team) => (
-          <Card key={team.id} className="hover:shadow-lg transition-shadow">
+        {recommendations.teams.map((team) => (
+          <Card key={team.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-primary">
             <CardHeader>
-              <CardTitle className="text-lg">{team.name}</CardTitle>
+              <div className="flex justify-between items-start mb-2">
+                <CardTitle className="text-lg">{team.name}</CardTitle>
+                <div className="flex items-center gap-1 text-sm text-primary font-medium">
+                  <Star className="h-4 w-4" />
+                  {Math.round(team.matchScore)}% match
+                </div>
+              </div>
               <Badge variant="outline">{team.hackathon.title}</Badge>
             </CardHeader>
             <CardContent>
@@ -133,7 +157,9 @@ export function TeamSearch() {
 
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{team._count.members} members</span>
+                <span className="text-sm text-muted-foreground">
+                  {team._count.members}/{team.hackathon.maxTeamSize} members
+                </span>
                 <div className="flex -space-x-2 ml-2">
                   {team.members.slice(0, 3).map((member, index) => (
                     <Avatar key={index} className="h-6 w-6 border-2 border-background">
@@ -149,22 +175,31 @@ export function TeamSearch() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-1 mb-4">
-                {team.members
-                  .flatMap((m) => {
-                    try {
-                      return m.user.skills ? JSON.parse(m.user.skills) : []
-                    } catch {
-                      return []
-                    }
-                  })
-                  .slice(0, 3)
-                  .map((skill, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-              </div>
+              {team.commonSkills.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs text-muted-foreground mb-1">Common skills:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {team.commonSkills.slice(0, 3).map((skill) => (
+                      <Badge key={skill} variant="default" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {team.complementarySkills.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs text-muted-foreground mb-1">You bring:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {team.complementarySkills.slice(0, 3).map((skill) => (
+                      <Badge key={skill} variant="secondary" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <Button 
@@ -183,16 +218,6 @@ export function TeamSearch() {
           </Card>
         ))}
       </div>
-
-      {filteredTeams.length === 0 && (
-        <div className="text-center py-12">
-          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No teams found</h3>
-          <p className="text-muted-foreground">
-            {search ? "Try adjusting your search terms" : "Be the first to create a team!"}
-          </p>
-        </div>
-      )}
     </div>
   )
-}
+} 

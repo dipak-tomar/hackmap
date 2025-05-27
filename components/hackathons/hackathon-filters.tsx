@@ -83,7 +83,7 @@ export function HackathonFilters() {
           </SelectContent>
         </Select>
 
-        <Button type="submit" size="icon" variant="outline">
+        <Button type="submit" size="icon" variant="outline" onClick={handleSearch}>
           <Filter className="h-4 w-4" />
         </Button>
       </div>

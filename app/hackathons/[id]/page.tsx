@@ -258,7 +258,9 @@ export default async function HackathonPage({ params }: HackathonPageProps) {
                         <p className="text-sm text-muted-foreground">
                           Registration is open until {new Date(hackathon.registrationDeadline).toLocaleDateString()}
                         </p>
-                        <Button>Register Now</Button>
+                        <Link href={`/hackathons/${hackathon.id}/register`}>
+                          <Button>Register Now</Button>
+                        </Link>
                       </div>
                     ) : (
                       <div className="space-y-2">

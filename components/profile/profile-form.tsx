@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,12 +14,34 @@ import { X, Plus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export function ProfileForm() {
-  const [name, setName] = useState("John Doe")
-  const [bio, setBio] = useState("Full-stack developer passionate about AI and web technologies.")
-  const [skills, setSkills] = useState(["React", "Node.js", "Python", "TypeScript"])
+  const [name, setName] = useState("")
+  const [bio, setBio] = useState("")
+  const [skills, setSkills] = useState<string[]>([])
   const [newSkill, setNewSkill] = useState("")
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const { toast } = useToast()
+
+  // Fetch current profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("/api/profile")
+        if (response.ok) {
+          const data = await response.json()
+          setName(data.name || "")
+          setBio(data.bio || "")
+          setSkills(data.skills || [])
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const addSkill = () => {
     if (newSkill && !skills.includes(newSkill)) {
@@ -37,13 +59,25 @@ export function ProfileForm() {
     setLoading(true)
 
     try {
-      // API call would go here
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Mock delay
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, bio, skills }),
       })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        })
+      } else {
+        const data = await response.json()
+        toast({
+          title: "Error",
+          description: data.error || "Failed to update profile",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       toast({
         title: "Error",

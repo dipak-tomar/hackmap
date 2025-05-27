@@ -37,11 +37,10 @@ export function MyTeams() {
 
   const fetchMyTeams = async () => {
     try {
-      // In a real app, this would filter by current user
-      const response = await fetch("/api/teams")
+      const response = await fetch("/api/teams/my-teams")
       if (response.ok) {
         const data = await response.json()
-        setTeams(data.slice(0, 2)) // Mock: show first 2 teams as "my teams"
+        setTeams(data)
       }
     } catch (error) {
       console.error("Error fetching teams:", error)

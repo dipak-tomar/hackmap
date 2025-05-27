@@ -1,12 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search } from "lucide-react"
 
-export function ProjectFilters() {
+interface ProjectFiltersProps {
+  onFiltersChange: (filters: {
+    search: string
+    category: string
+    sortBy: string
+  }) => void
+}
+
+export function ProjectFilters({ onFiltersChange }: ProjectFiltersProps) {
   const [search, setSearch] = useState("")
+  const [category, setCategory] = useState("all")
+  const [sortBy, setSortBy] = useState("recent")
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onFiltersChange({ search, category, sortBy })
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [search, category, sortBy, onFiltersChange])
 
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -23,7 +42,7 @@ export function ProjectFilters() {
       </div>
 
       <div className="flex gap-2">
-        <Select defaultValue="all">
+        <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
@@ -37,7 +56,7 @@ export function ProjectFilters() {
           </SelectContent>
         </Select>
 
-        <Select defaultValue="recent">
+        <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
