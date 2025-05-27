@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { sendTeamUpdateEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +31,13 @@ export async function POST(request: NextRequest) {
       where: { inviteCode },
       include: {
         members: true,
+        leader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         hackathon: {
           select: {
             id: true,
@@ -117,6 +125,23 @@ export async function POST(request: NextRequest) {
         message: `${user.name} has joined your team "${team.name}"`,
       },
     })
+
+    // Send email notification to team leader
+    if (team.leader.email) {
+      try {
+        await sendTeamUpdateEmail(team.leader.email, {
+          teamName: team.name,
+          hackathonTitle: team.hackathon.title,
+          updateType: "New Team Member",
+          message: `${user.name || user.email} has successfully joined your team using the invite code.`,
+          memberName: user.name || user.email,
+          teamId: team.id,
+        })
+      } catch (emailError) {
+        console.error('Failed to send team update email:', emailError)
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json(teamMember, { status: 201 })
   } catch (error) {
