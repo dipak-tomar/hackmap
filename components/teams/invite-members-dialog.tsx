@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Copy, Check, Share2 } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Copy, Check, Share2, Mail, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface InviteMembersDialogProps {
@@ -20,16 +21,20 @@ interface InviteMembersDialogProps {
   teamName: string
   inviteCode: string
   hackathonTitle: string
+  teamId: string
 }
 
 export function InviteMembersDialog({ 
   children, 
   teamName, 
   inviteCode, 
-  hackathonTitle 
+  hackathonTitle,
+  teamId 
 }: InviteMembersDialogProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [email, setEmail] = useState("")
+  const [sendingEmail, setSendingEmail] = useState(false)
   const { toast } = useToast()
 
   const inviteUrl = typeof window !== 'undefined' 
@@ -80,6 +85,63 @@ Let's build something amazing together! 💻✨`
     }
   }
 
+  const sendEmailInvite = async () => {
+    if (!email.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSendingEmail(true)
+    try {
+      const response = await fetch(`/api/teams/${teamId}/invite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "Invitation sent!",
+          description: `Email invitation sent to ${email}`,
+        })
+        setEmail("")
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to send invitation",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation",
+        variant: "destructive",
+      })
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -94,6 +156,41 @@ Let's build something amazing together! 💻✨`
         </DialogHeader>
         
         <div className="space-y-4">
+          {/* Email Invite */}
+          <div className="space-y-2">
+            <Label htmlFor="email-invite">Send Email Invitation</Label>
+            <div className="flex gap-2">
+              <Input
+                id="email-invite"
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    sendEmailInvite()
+                  }
+                }}
+              />
+              <Button
+                onClick={sendEmailInvite}
+                disabled={sendingEmail}
+                size="icon"
+              >
+                {sendingEmail ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Send a direct email invitation with the team details
+            </p>
+          </div>
+
+          <Separator />
+
           {/* Invite Code */}
           <div className="space-y-2">
             <Label htmlFor="invite-code">Invite Code</Label>

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { sendJoinRequestEmail } from "@/lib/email"
 
 export async function POST(
   request: NextRequest,
@@ -39,6 +40,7 @@ export async function POST(
           select: {
             id: true,
             name: true,
+            email: true,
           },
         },
       },
@@ -114,6 +116,22 @@ export async function POST(
         message: `${user.name} wants to join your team "${team.name}" for ${team.hackathon.title}`,
       },
     })
+
+    // Send email notification to team leader
+    if (team.leader.email) {
+      try {
+        await sendJoinRequestEmail(team.leader.email, {
+          teamName: team.name,
+          hackathonTitle: team.hackathon.title,
+          requesterName: user.name || user.email,
+          requesterEmail: user.email,
+          teamLeaderName: team.leader.name || 'Team Leader',
+        })
+      } catch (emailError) {
+        console.error('Failed to send join request email:', emailError)
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({ 
       success: true, 

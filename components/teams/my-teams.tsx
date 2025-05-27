@@ -101,6 +101,7 @@ export function MyTeams() {
                     teamName={team.name}
                     inviteCode={team.inviteCode}
                     hackathonTitle={team.hackathon.title}
+                    teamId={team.id}
                   >
                     <Button size="sm" variant="outline">
                       <UserPlus className="h-4 w-4 mr-1" />
@@ -124,10 +125,10 @@ export function MyTeams() {
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No teams yet</h3>
             <p className="text-muted-foreground mb-4">Create your first team or join an existing one to get started</p>
-            <div className="flex gap-2 justify-center">
+            {/* <div className="flex gap-2 justify-center">
               <Button>Create Team</Button>
               <Button variant="outline">Browse Teams</Button>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       )}
