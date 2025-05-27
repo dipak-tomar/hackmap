@@ -86,8 +86,31 @@ The build process includes Prisma generation:
 ```json
 {
   "scripts": {
-    "build": "prisma generate && next build",
-    "postinstall": "prisma generate"
+    "build": "npx prisma generate && next build",
+    "postinstall": "npx prisma generate"
+  }
+}
+```
+
+### Alternative Build Methods
+
+If you encounter issues with the default build process, try these alternatives:
+
+1. **Use the build script**: Set build command to `./scripts/build.sh`
+2. **Manual Vercel configuration**: Add custom build commands in `vercel.json`
+3. **Environment-specific builds**: Different commands for different environments
+
+### Dependency Configuration
+
+Ensure Prisma is properly configured:
+
+```json
+{
+  "dependencies": {
+    "@prisma/client": "latest"
+  },
+  "devDependencies": {
+    "prisma": "latest"
   }
 }
 ```
@@ -116,18 +139,23 @@ If you encounter build errors:
 
 2. **"Cannot find module '.prisma/client/default'"**
    - Prisma client not generated during build
-   - Fixed by adding `prisma generate` to build scripts
-   - Ensure `vercel.json` includes proper build commands
+   - Fixed by adding `npx prisma generate` to build scripts
+   - Ensure Prisma is in devDependencies
 
-3. **Database connection timeout**
+3. **"prisma: command not found"**
+   - Prisma CLI not available during build
+   - Fixed by using `npx prisma generate` instead of `prisma generate`
+   - Alternative: Use the provided build script `scripts/build.sh`
+
+4. **Database connection timeout**
    - App automatically retries failed connections
    - Check database provider status
 
-4. **NextAuth errors**
+5. **NextAuth errors**
    - Verify NEXTAUTH_URL matches your domain
    - Ensure NEXTAUTH_SECRET is set
 
-5. **Build fails on Vercel**
+6. **Build fails on Vercel**
    - Check that all environment variables are set
    - Verify DATABASE_URL format is correct
    - Ensure Prisma schema is valid
