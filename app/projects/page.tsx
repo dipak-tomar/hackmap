@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
@@ -17,6 +17,10 @@ export default function ProjectsPage() {
     category: "all",
     sortBy: "recent"
   })
+
+  const handleFiltersChange = useCallback((newFilters: typeof filters) => {
+    setFilters(newFilters)
+  }, [])
 
   if (status === "loading") {
     return <div>Loading...</div>
@@ -44,7 +48,7 @@ export default function ProjectsPage() {
             </CreateProjectDialog>
           </div>
 
-          <ProjectFilters onFiltersChange={setFilters} />
+          <ProjectFilters onFiltersChange={handleFiltersChange} />
           <ProjectGrid filters={filters} />
         </div>
       </main>

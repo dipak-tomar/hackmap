@@ -11,19 +11,22 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "recent"
 
     const where: any = {}
+    const conditions: any[] = []
 
     // Search filter
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { techStack: { contains: search, mode: "insensitive" } },
-        {
-          team: {
-            name: { contains: search, mode: "insensitive" }
+      conditions.push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          { techStack: { contains: search, mode: "insensitive" } },
+          {
+            team: {
+              name: { contains: search, mode: "insensitive" }
+            }
           }
-        }
-      ]
+        ]
+      })
     }
 
     // Category filter (based on tech stack)
@@ -38,10 +41,17 @@ export async function GET(request: NextRequest) {
 
       const techKeywords = categoryMap[category] || []
       if (techKeywords.length > 0) {
-        where.OR = techKeywords.map(keyword => ({
-          techStack: { contains: keyword, mode: "insensitive" }
-        }))
+        conditions.push({
+          OR: techKeywords.map(keyword => ({
+            techStack: { contains: keyword, mode: "insensitive" }
+          }))
+        })
       }
+    }
+
+    // Combine conditions with AND
+    if (conditions.length > 0) {
+      where.AND = conditions
     }
 
     // Determine order by

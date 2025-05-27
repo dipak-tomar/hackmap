@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search } from "lucide-react"
@@ -18,14 +18,19 @@ export function ProjectFilters({ onFiltersChange }: ProjectFiltersProps) {
   const [category, setCategory] = useState("all")
   const [sortBy, setSortBy] = useState("recent")
 
+  // Memoize the callback to prevent unnecessary re-renders
+  const handleFiltersChange = useCallback(() => {
+    onFiltersChange({ search, category, sortBy })
+  }, [search, category, sortBy, onFiltersChange])
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
-      onFiltersChange({ search, category, sortBy })
+      handleFiltersChange()
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [search, category, sortBy, onFiltersChange])
+  }, [handleFiltersChange])
 
   return (
     <div className="flex flex-col sm:flex-row gap-4">

@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = await request.json()
-    const { name, bio, skills } = data
+    const { name, bio, skills, image } = data
 
     // Validate skills array
     if (skills && !Array.isArray(skills)) {
@@ -61,6 +61,7 @@ export async function PUT(request: NextRequest) {
         name: name || undefined,
         bio: bio || undefined,
         skills: skills ? JSON.stringify(skills) : undefined,
+        image: image || undefined,
       },
       select: {
         id: true,

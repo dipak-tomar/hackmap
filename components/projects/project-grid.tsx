@@ -48,6 +48,7 @@ export function ProjectGrid({ filters }: ProjectGridProps) {
   }, [filters])
 
   const fetchProjects = async () => {
+    setLoading(true)
     try {
       const params = new URLSearchParams()
       if (filters?.search) params.set("search", filters.search)
@@ -58,6 +59,8 @@ export function ProjectGrid({ filters }: ProjectGridProps) {
       if (response.ok) {
         const data = await response.json()
         setProjects(data)
+      } else {
+        console.error("Failed to fetch projects:", response.status, response.statusText)
       }
     } catch (error) {
       console.error("Error fetching projects:", error)
@@ -68,6 +71,21 @@ export function ProjectGrid({ filters }: ProjectGridProps) {
 
   if (loading) {
     return <div>Loading projects...</div>
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No projects found</h3>
+        <p className="text-muted-foreground">
+          {filters?.search || filters?.category !== "all" 
+            ? "Try adjusting your search terms or filters" 
+            : "Be the first to share a project idea!"
+          }
+        </p>
+      </div>
+    )
   }
 
   return (
