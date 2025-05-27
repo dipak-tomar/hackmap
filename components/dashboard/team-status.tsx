@@ -116,14 +116,14 @@ export async function TeamStatus() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  {/* <Button size="sm" variant="outline">
                     <MessageSquare className="h-4 w-4 mr-1" />
                     Chat
                   </Button>
                   <Button size="sm" variant="outline">
                     <Settings className="h-4 w-4 mr-1" />
                     Manage
-                  </Button>
+                  </Button> */}
                   <Button size="sm" asChild>
                     <Link href={`/teams/${team.id}`}>View Team</Link>
                   </Button>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { ProfileForm } from "@/components/profile/profile-form"
 import { ProfileStats } from "@/components/profile/profile-stats"
+import { NotificationPreferences } from "@/components/profile/notification-preferences"
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -23,8 +24,9 @@ export default async function ProfilePage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-8">
               <ProfileForm />
+              <NotificationPreferences />
             </div>
             <div>
               <ProfileStats />

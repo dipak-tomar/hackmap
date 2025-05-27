@@ -12,8 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Menu, X, Code, Users, Lightbulb, User, Settings, LogOut } from "lucide-react"
+import { Menu, X, Code, Users, Lightbulb, User, Settings, LogOut, Bell } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NotificationBell } from "@/components/NotificationBell"
 
 export function Navbar() {
   const { data: session } = useSession()
@@ -50,6 +51,7 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <NotificationBell />
             {/* <ThemeToggle /> */}
             {session ? (
               <DropdownMenu>
@@ -81,6 +83,12 @@ export function Navbar() {
                     <Link href="/profile">
                       <Settings className="mr-2 h-4 w-4" />
                       Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/notifications">
+                      <Bell className="mr-2 h-4 w-4" />
+                      Notifications
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
